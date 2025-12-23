@@ -91,20 +91,45 @@ export const updateUserStreak = async (userId, streak) => {
   return data;
 };
 
+export const getAllRewardsWithDetails = async () => {
+  try {
+    const { data, error } = await supabase
+      .from("rewards")
+      .select("*")
+      .eq("active", true)
+      .order("points_required", { ascending: true });
+
+    if (error) {
+      console.error("getAllRewardsWithDetails error:", error);
+      throw new Error(error.message);
+    }
+
+    console.log("Rewards fetched from database:", data);
+    return data || [];
+  } catch (err) {
+    console.error("getAllRewardsWithDetails catch:", err);
+    return [];
+  }
+};
+
 // ===== CHECKIN QUERIES =====
 export const hasCheckedInToday = async (userId) => {
   try {
     const today = new Date().toISOString().split("T")[0];
+    console.log("Checking if user checked in today:", today);
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("daily_checkins")
       .select("id")
       .eq("user_id", userId)
       .eq("checkin_date", today)
       .single();
 
-    return !!data;
-  } catch {
+    const result = !!data && !error;
+    console.log("hasCheckedInToday result:", result);
+    return result;
+  } catch (err) {
+    console.error("hasCheckedInToday error:", err);
     return false;
   }
 };
@@ -112,16 +137,40 @@ export const hasCheckedInToday = async (userId) => {
 export const createDailyCheckin = async (userId) => {
   const today = new Date().toISOString().split("T")[0];
 
-  const { data, error } = await supabase
-    .from("daily_checkins")
-    .insert([{ user_id: userId, checkin_date: today, points_earned: 5 }])
-    .select()
-    .single();
+  try {
+    // First check if already checked in today
+    const { data: existingCheckin, error: checkError } = await supabase
+      .from("daily_checkins")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("checkin_date", today)
+      .single();
 
-  if (error) throw new Error(error.message);
-  return data;
+    // If record exists, return it (don't create duplicate)
+    if (existingCheckin && !checkError) {
+      console.log("Already checked in today, returning existing record");
+      return existingCheckin;
+    }
+
+    // If no record exists, create new one
+    const { data, error } = await supabase
+      .from("daily_checkins")
+      .insert([{ user_id: userId, checkin_date: today, points_earned: 5 }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("createDailyCheckin error:", error);
+      throw new Error(error.message);
+    }
+
+    console.log("New checkin created:", data);
+    return data;
+  } catch (err) {
+    console.error("createDailyCheckin catch:", err);
+    throw err;
+  }
 };
-
 export const addPointHistory = async (userId, points, source, description) => {
   const { data, error } = await supabase
     .from("point_history")

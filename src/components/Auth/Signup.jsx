@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2, Eye, EyeOff, Check } from "lucide-react";
+import { Loader2, Eye, EyeOff, Check, AlertCircle } from "lucide-react";
 import { signUp } from "../../config/supabaseClient";
 
 export default function Signup({ onSuccess, onToggleLogin }) {
@@ -29,9 +29,11 @@ export default function Signup({ onSuccess, onToggleLogin }) {
     setError(null);
 
     try {
-      console.log("Creating account for:", email);
-      await signUp(email, password);
-      console.log("Signup successful!");
+      console.log("🔄 Attempting signup for:", email);
+
+      const result = await signUp(email, password);
+      console.log("✅ Signup successful:", result);
+
       setSuccess(true);
 
       setTimeout(() => {
@@ -40,10 +42,20 @@ export default function Signup({ onSuccess, onToggleLogin }) {
         setConfirmPassword("");
         setSuccess(false);
         onToggleLogin();
-      }, 3000);
+      }, 2000);
     } catch (err) {
-      console.error("Signup error:", err);
-      setError(err.message || "Failed to create account. Please try again.");
+      console.error("❌ Signup error:", err);
+
+      // Better error messages
+      if (err.message.includes("504")) {
+        setError("Supabase service is slow. Please try again in a moment.");
+      } else if (err.message.includes("already registered")) {
+        setError("This email is already registered. Try logging in instead.");
+      } else if (err.message.includes("password")) {
+        setError("Password must be at least 6 characters.");
+      } else {
+        setError(err.message || "Failed to create account. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -84,8 +96,9 @@ export default function Signup({ onSuccess, onToggleLogin }) {
         </p>
 
         {error && (
-          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
-            {error}
+          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm flex gap-2">
+            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            <div>{error}</div>
           </div>
         )}
 

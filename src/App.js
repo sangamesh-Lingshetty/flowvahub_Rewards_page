@@ -12,15 +12,15 @@ import Landing from "./components/Landing";
 import Login from "./components/Auth/Login";
 import Signup from "./components/Auth/Signup";
 import PointsDisplay from "./components/PointsDisplay";
-import DailyCheckin from "./components/DailyCheckin";
-import RewardsSection from "./components/RewardsSection";
-import ReferralSection from "./components/ReferralSection";
+import Tabs from "./components/Tabs";
+import EarnPointsTab from "./components/EarnPointsTab";
+import RedeemRewardsTab from "./components/RedeemRewardsTab";
 
 export default function App() {
   // Auth states
   const [authUser, setAuthUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [authMode, setAuthMode] = useState("landing"); // 'landing' | 'login' | 'signup' | 'dashboard'
+  const [authMode, setAuthMode] = useState("landing");
 
   // Dashboard states
   const [user, setUser] = useState(null);
@@ -29,6 +29,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [canCheckinToday, setCanCheckinToday] = useState(true);
+  const [activeTab, setActiveTab] = useState("earn"); // 'earn' or 'redeem'
 
   // Check auth state on mount
   useEffect(() => {
@@ -54,37 +55,28 @@ export default function App() {
   const initializeApp = async (userId, userEmail) => {
     try {
       setLoading(true);
-      console.log("Initializing app for user:", userId, userEmail);
 
-      // Get or create user profile
-      let userData = await getUserData(userId);
-      console.log("Got user data:", userData);
+      let userData = await getUserData(userId).catch(() => null);
 
-      // If no profile, create one
       if (!userData) {
-        console.log("No user profile found, creating new one...");
+        console.log("Creating new user profile...");
         userData = await createUser(userEmail);
-        console.log("New profile created:", userData);
       }
 
       setUser(userData);
 
-      // Fetch rewards
       const rewardsData = await getAllRewards();
       setRewards(rewardsData);
 
-      // Fetch claimed rewards
       const claimed = await getUserClaimedRewards(userId);
       setClaimedRewards(claimed);
 
-      // Check if checked in today
       const hasCheckedIn = await hasCheckedInToday(userId);
       setCanCheckinToday(!hasCheckedIn);
 
       setError(null);
-      console.log("App initialized successfully!");
     } catch (err) {
-      console.error("Error initializing app:", err);
+      console.error("Error:", err);
       setError("Failed to load rewards. Please refresh.");
     } finally {
       setLoading(false);
@@ -115,11 +107,10 @@ export default function App() {
   };
 
   const handleAuthSuccess = () => {
-    // Auth state change will be handled by onAuthStateChange listener
     console.log("Auth successful, waiting for state change...");
   };
 
-  // Show loading while checking auth state
+  // Loading state
   if (authLoading && authMode !== "landing") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
@@ -161,7 +152,7 @@ export default function App() {
     );
   }
 
-  // Dashboard Page
+  // Dashboard Page - Loading
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
@@ -173,6 +164,7 @@ export default function App() {
     );
   }
 
+  // Dashboard Page - Error
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary to-secondary flex items-center justify-center p-4">
@@ -190,6 +182,7 @@ export default function App() {
     );
   }
 
+  // Dashboard Page - Success
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -219,30 +212,28 @@ export default function App() {
       <main className="max-w-6xl mx-auto px-4 py-8">
         {user && (
           <>
-            <PointsDisplay
-              points={user.total_points}
-              streak={user.current_streak}
-            />
+            
 
-            <DailyCheckin
-              userId={user.id}
-              userPoints={user.total_points}
-              canCheckinToday={canCheckinToday}
-              onCheckinSuccess={handleCheckinSuccess}
-            />
+            {/* Tabs */}
+            <Tabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-            <RewardsSection
-              userId={user.id}
-              rewards={rewards}
-              userPoints={user.total_points}
-              claimedRewards={claimedRewards}
-              onRewardClaimed={handleRewardClaimed}
-            />
-
-            <ReferralSection
-              userId={user.id}
-              referralCode={user.referral_code}
-            />
+            {/* Tab Content */}
+            {activeTab === "earn" ? (
+              <EarnPointsTab
+                userId={user.id}
+                userPoints={user.total_points}
+                currentStreak={user.current_streak}
+                canCheckinToday={canCheckinToday}
+                onCheckinSuccess={handleCheckinSuccess}
+              />
+            ) : (
+              <RedeemRewardsTab
+                userId={user.id}
+                userPoints={user.total_points}
+                claimedRewards={claimedRewards}
+                onRewardClaimed={handleRewardClaimed}
+              />
+            )}
           </>
         )}
       </main>
