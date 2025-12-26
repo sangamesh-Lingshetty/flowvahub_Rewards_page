@@ -445,7 +445,8 @@ Any issues, refer to:
 ## 📧 Contact
 
 Questions about this project?  
-Contact: jessie@flowvahub.com
+Contact: sangameshlingshetty@gmail.com
+phone no: 7619587629
 
 ---
 
@@ -507,45 +508,3 @@ UI/UX:
 
 ---
 
-## 🎯 HOW TO WIN
-
-**What they're looking for:**
-
-1. **Real Supabase usage** → You have it ✅
-2. **Clean code** → Make it spotless
-3. **Working features** → All working ✅
-4. **Professional README** → We just made it
-5. **Deployed & live** → You have it ✅
-6. **Attention to detail** → Toast notifications + empty states
-7. **Good git history** → Clean commits
-8. **Communication** → Clear explanations in README
-
----
-
-## 📤 FINAL SUBMISSION
-
-When ready, send:
-```
-Subject: React Full-Stack Assessment Submission
-
-Hi Jessie,
-
-I've completed the Flowva Rewards Hub assessment.
-
-GitHub: [Your URL]
-Live Demo: [Your Vercel URL]
-
-Key highlights:
-✓ Full authentication system
-✓ Database-driven points & rewards
-✓ Daily streak tracking with calendar
-✓ Responsive design
-✓ Professional error handling
-✓ Toast notifications & empty states
-✓ Clean code with comments
-✓ Comprehensive README
-
-All features working and deployed.
-
-Thanks,
-[Your Name]
