@@ -127,6 +127,66 @@ export default function RedeemRewardsTab({
 
   const filteredRewards = getFilteredRewards();
 
+  function EmptyState({ filter, userPoints, allRewards }) {
+    const getEmptyMessage = () => {
+      switch (filter) {
+        case "unlocked":
+          return {
+            icon: "🎁",
+            title: "No Unlocked Rewards Yet",
+            description: "Earn more points to unlock rewards!",
+            action: "Keep earning points daily",
+          };
+        case "locked":
+          const lowestLocked = allRewards
+            .filter((r) => userPoints < r.points_required)
+            .sort((a, b) => a.points_required - b.points_required)[0];
+          return {
+            icon: "🔒",
+            title: "All Locked",
+            description: lowestLocked
+              ? `${
+                  lowestLocked.points_required - userPoints
+                } more points needed`
+              : "Check back soon!",
+            action: "Complete daily check-ins to earn points",
+          };
+        case "coming":
+          return {
+            icon: "⏳",
+            title: "Coming Soon",
+            description: "Exciting rewards are on the way!",
+            action: "Stay tuned for new rewards",
+          };
+        default:
+          return {
+            icon: "🎯",
+            title: "No Rewards Available",
+            description: "Check back later for new rewards",
+            action: "Keep earning points",
+          };
+      }
+    };
+
+    const { icon, title, description, action } = getEmptyMessage();
+
+    return (
+      <div className="text-center py-16">
+        <div className="text-7xl mb-6">{icon}</div>
+        <h3 className="text-2xl font-bold text-gray-800 mb-3">{title}</h3>
+        <p className="text-gray-600 mb-2">{description}</p>
+        <p className="text-sm text-gray-500 italic">{action}</p>
+
+        <div className="mt-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
+          <p className="text-sm text-gray-700">
+            💡 <strong>Pro Tip:</strong> Check in daily to earn +5 points toward
+            your first reward!
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const handleClaim = async (reward) => {
     if (userPoints < reward.points_required) {
       alert(`You need ${reward.points_required - userPoints} more points!`);
@@ -274,12 +334,11 @@ export default function RedeemRewardsTab({
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-gray-600 mb-2">No rewards to display</p>
-            <p className="text-sm text-gray-500">
-              Keep earning points to unlock more rewards!
-            </p>
-          </div>
+          <EmptyState
+            filter={activeFilter}
+            userPoints={userPoints}
+            allRewards={rewards}
+          />
         )}
       </div>
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Share2, Users, Loader2, CheckCircle2 } from "lucide-react";
+import { Share2, Users, Loader2 } from "lucide-react";
 import {
   createDailyCheckin,
   updateUserPoints,
@@ -71,6 +71,16 @@ export default function EarnPointsTab({
     }
   };
 
+  // Get today's day of week (0 = Sunday, 1 = Monday, etc)
+  const getTodayIndex = () => {
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0-6
+    // Convert to 0-6 (M-S): Sunday=6, Monday=0, Tuesday=1, etc
+    return dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  };
+
+  const todayIndex = getTodayIndex();
+
   return (
     <div className="space-y-8">
       {/* ============= YOUR REWARDS JOURNEY ============= */}
@@ -130,33 +140,51 @@ export default function EarnPointsTab({
               </p>
             </div>
 
-            {/* Calendar */}
+            {/* Calendar - FULLY DYNAMIC */}
             <div className="grid grid-cols-7 gap-2 mb-6">
-              {["M", "T", "W", "T", "F", "S", "S"].map((day, idx) => (
-                <div key={idx} className="text-center">
-                  <p className="text-xs font-bold text-gray-600 mb-1.5">
-                    {day}
-                  </p>
-                  <div
-                    className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
-                      idx === 1 // Today is Tuesday (index 1)
-                        ? currentStreak > 0
-                          ? "bg-primary text-white ring-2 ring-primary ring-offset-2"
-                          : "bg-gray-200 text-gray-400"
-                        : "bg-gray-200 text-gray-400"
-                    }`}
-                  >
-                    {idx === 1 && currentStreak > 0 ? "✓" : ""}
+              {["M", "T", "W", "T", "F", "S", "S"].map((day, idx) => {
+                const isToday = idx === todayIndex;
+                const isPast = idx < todayIndex;
+                const isFuture = idx > todayIndex;
+
+                return (
+                  <div key={idx} className="text-center">
+                    <p className="text-xs font-bold text-gray-600 mb-1.5">
+                      {day}
+                    </p>
+                    <div
+                      className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
+                        isToday
+                          ? canCheckinToday
+                            ? "bg-gray-200 text-gray-400 ring-2 ring-amber-400 ring-offset-2" // Today, not checked in
+                            : "bg-primary text-white ring-2 ring-primary ring-offset-2" // Today, checked in
+                          : isPast
+                          ? "bg-primary text-white" // Past days, checked
+                          : "bg-gray-200 text-gray-400" // Future days
+                      }`}
+                    >
+                      {isToday ? (
+                        canCheckinToday ? (
+                          <span className="text-amber-500">●</span> // Today dot
+                        ) : (
+                          "✓"
+                        )
+                      ) : isPast ? (
+                        "✓"
+                      ) : (
+                        ""
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <p className="text-xs text-gray-600 text-center mb-4">
               Check in daily to to earn +5 points
             </p>
 
-            {/* CHECK IN BUTTON - LOGIC FIXED */}
+            {/* CHECK IN BUTTON */}
             {canCheckinToday ? (
               // Button ENABLED if NOT checked in today
               <button

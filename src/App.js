@@ -14,6 +14,7 @@ import Signup from "./components/Auth/Signup";
 import PointsDisplay from "./components/PointsDisplay";
 import Tabs from "./components/Tabs";
 import EarnPointsTab from "./components/EarnPointsTab";
+import Toast from "./components/Toast";
 import RedeemRewardsTab from "./components/RedeemRewardsTab";
 
 export default function App() {
@@ -21,6 +22,7 @@ export default function App() {
   const [authUser, setAuthUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [authMode, setAuthMode] = useState("landing");
+  const [toast, setToast] = useState(null);
 
   // Dashboard states
   const [user, setUser] = useState(null);
@@ -30,6 +32,20 @@ export default function App() {
   const [error, setError] = useState(null);
   const [canCheckinToday, setCanCheckinToday] = useState(true);
   const [activeTab, setActiveTab] = useState("earn"); // 'earn' or 'redeem'
+
+  const showToast = (message, type = "success") => {
+    setToast({ message, type });
+  };
+  // In return:
+  {
+    toast && (
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(null)}
+      />
+    );
+  }
 
   // Check auth state on mount
   useEffect(() => {
@@ -85,11 +101,13 @@ export default function App() {
   };
 
   const handleCheckinSuccess = () => {
+    showToast('✅ Check-in successful! +5 points');
     setCanCheckinToday(false);
     if (user) initializeApp(user.id, authUser.email);
   };
 
   const handleRewardClaimed = () => {
+    showToast('🎉 Reward claimed successfully!');
     if (user) initializeApp(user.id, authUser.email);
   };
 
@@ -212,8 +230,6 @@ export default function App() {
       <main className="max-w-6xl mx-auto px-4 py-8">
         {user && (
           <>
-            
-
             {/* Tabs */}
             <Tabs activeTab={activeTab} onTabChange={setActiveTab} />
 
