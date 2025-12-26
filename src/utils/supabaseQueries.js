@@ -243,3 +243,100 @@ export const getReferralStats = async (userId) => {
   // For now, return mock data
   return { referrals: 0, pointsEarned: 0 };
 };
+
+// Get user's claimed rewards with details
+export const getUserClaimedRewardsWithDetails = async (userId) => {
+  try {
+    const { data, error } = await supabase
+      .from("user_rewards")
+      .select(
+        `
+        id,
+        reward_id,
+        claimed_at,
+        rewards:reward_id (
+          id,
+          name,
+          description,
+          points_required,
+          icon,
+          category
+        )
+      `
+      )
+      .eq("user_id", userId)
+      .order("claimed_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching claimed rewards:", error);
+      return [];
+    }
+
+    console.log("✅ Claimed rewards fetched:", data);
+    return data || [];
+  } catch (err) {
+    console.error("getUserClaimedRewardsWithDetails error:", err);
+    return [];
+  }
+};
+
+export const getUserClaimedRewardIds = async (userId) => {
+  try {
+    console.log("📥 Fetching claimed reward IDs...");
+
+    const { data, error } = await supabase
+      .from("user_rewards")
+      .select("reward_id")
+      .eq("user_id", userId);
+
+    if (error) {
+      console.error("❌ Error:", error);
+      return [];
+    }
+
+    const ids = data.map((item) => item.reward_id);
+    console.log("✅ Claimed IDs from DB:", ids);
+    return ids;
+  } catch (err) {
+    console.error("❌ Error:", err);
+    return [];
+  }
+};
+
+// Check if specific reward is claimed
+export const isRewardClaimed = async (userId, rewardId) => {
+  try {
+    const { data, error } = await supabase
+      .from("user_rewards")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("reward_id", rewardId)
+      .single();
+
+    if (error && error.code !== "PGRST116") {
+      throw error;
+    }
+
+    return !!data;
+  } catch (err) {
+    console.error("isRewardClaimed error:", err);
+    return false;
+  }
+};
+
+// Get reward details
+export const getRewardDetails = async (rewardId) => {
+  try {
+    const { data, error } = await supabase
+      .from("rewards")
+      .select("*")
+      .eq("id", rewardId)
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (err) {
+    console.error("getRewardDetails error:", err);
+    return null;
+  }
+};

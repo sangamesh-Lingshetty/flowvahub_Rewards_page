@@ -5,7 +5,8 @@ import {
   getUserData,
   createUser,
   getAllRewards,
-  getUserClaimedRewards,
+  getAllRewardsWithDetails,
+  getUserClaimedRewardIds,
   hasCheckedInToday,
 } from "./utils/supabaseQueries";
 import Landing from "./components/Landing";
@@ -71,29 +72,35 @@ export default function App() {
   const initializeApp = async (userId, userEmail) => {
     try {
       setLoading(true);
+      console.log("🚀 Initializing app for:", userEmail);
 
-      let userData = await getUserData(userId).catch(() => null);
-
+      // Get user data
+      let userData = await getUserData(userId);
       if (!userData) {
-        console.log("Creating new user profile...");
         userData = await createUser(userEmail);
       }
-
       setUser(userData);
+      console.log("✅ User data:", userData);
 
-      const rewardsData = await getAllRewards();
+      // Fetch all rewards
+      const rewardsData = await getAllRewardsWithDetails();
       setRewards(rewardsData);
+      console.log("✅ Rewards loaded:", rewardsData.length);
 
-      const claimed = await getUserClaimedRewards(userId);
-      setClaimedRewards(claimed);
+      // CRITICAL: Fetch claimed rewards from database
+      const claimedIds = await getUserClaimedRewardIds(userId);
+      setClaimedRewards(claimedIds);
+      console.log("✅ Claimed rewards:", claimedIds);
 
+      // Check if can check in today
       const hasCheckedIn = await hasCheckedInToday(userId);
       setCanCheckinToday(!hasCheckedIn);
 
       setError(null);
+      console.log("✅ APP READY");
     } catch (err) {
-      console.error("Error:", err);
-      setError("Failed to load rewards. Please refresh.");
+      console.error("❌ Init error:", err);
+      setError("Failed to load. Refresh page.");
     } finally {
       setLoading(false);
       setAuthLoading(false);
@@ -101,13 +108,13 @@ export default function App() {
   };
 
   const handleCheckinSuccess = () => {
-    showToast('✅ Check-in successful! +5 points');
+    showToast("✅ Check-in successful! +5 points");
     setCanCheckinToday(false);
     if (user) initializeApp(user.id, authUser.email);
   };
 
   const handleRewardClaimed = () => {
-    showToast('🎉 Reward claimed successfully!');
+    showToast("🎉 Reward claimed successfully!");
     if (user) initializeApp(user.id, authUser.email);
   };
 
